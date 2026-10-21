@@ -8,6 +8,7 @@ import type { Post, PostComment, PostFields } from '../types.ts';
 import Avatar from './Avatar.tsx';
 import Button from './Button.tsx';
 import Comments from './Comments.tsx';
+import DeleteButton from './DeleteButton.tsx';
 import StatusBadge from './StatusBadge.tsx';
 
 interface CommentsState {
@@ -108,7 +109,6 @@ export default function PostCard({ post, highlight }: PostCardProps) {
     };
 
     const deletePost = async () => {
-        if (!window.confirm(`Vai tiešām dzēst ierakstu „${post.title}”?`)) return;
         const ok = await perform('delete', () => Api.deletePost(post.id), 'Ieraksts izdzēsts.');
         if (ok) setRemoving(true);
     };
@@ -183,9 +183,11 @@ export default function PostCard({ post, highlight }: PostCardProps) {
                             ))}
                         </select>
                         <Button className="ghost" data-action="edit" onClick={startEdit}>✎ Rediģēt</Button>
-                        <Button className="ghost danger" data-action="delete" loading={busy === 'delete'} onClick={deletePost}>
-                            Dzēst
-                        </Button>
+                        <DeleteButton
+                            confirmText={`Vai tiešām dzēst ierakstu „${post.title}”?`}
+                            loading={busy === 'delete'}
+                            onConfirm={deletePost}
+                        />
                     </>
                 )}
             </footer>
