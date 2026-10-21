@@ -3,6 +3,7 @@ import { Api } from '../api.ts';
 import type { CreatedPost, Post, RunFn } from '../types.ts';
 
 type LoadStatus = 'loading' | 'ready' | 'error';
+export type PostOrder = 'newest' | 'oldest';
 
 // Ierakstu saraksts un tā stāvoklis. `run` ir kopīgā funkcija, kas izpilda API izsaukumu
 // un parāda kļūdas paziņojumu (skat. App.jsx).
@@ -11,6 +12,7 @@ export function usePosts(run: RunFn) {
     const [status, setStatus] = useState<LoadStatus>('loading');
     const [filterId, setFilterId] = useState<number | null>(null); // ja nav null, rāda tikai šo ierakstu
     const [highlightId, setHighlightId] = useState<number | null>(null);
+    const [order, setOrder] = useState<PostOrder>('newest');   // kārtošanas secība
     const sequence = useRef(0);
     const abortRef = useRef<AbortController | null>(null);
 
@@ -67,13 +69,12 @@ export function usePosts(run: RunFn) {
         setFilterId((current) => (current === id ? null : current));
     }, []);
 
-    // Jaunākie ieraksti augšā
-    const visible = filterId === null
-        ? [...posts].reverse()
-        : posts.filter((p) => p.id === filterId);
+    // Pēc izvēlētās secības: jaunākie augšā vai vecākie augšā
+    const sorted = order === 'newest' ? [...posts].reverse() : [...posts];
+    const visible = filterId === null ? sorted : posts.filter((p) => p.id === filterId);
 
     return {
-        visible, total: posts.length, status, filterId, highlightId,
+        visible, total: posts.length, order, setOrder, status, filterId, highlightId,
         load, cancel, showOne, add, replace: upsert, remove,
     };
 }

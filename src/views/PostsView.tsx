@@ -65,6 +65,15 @@ export default function PostsView({ active }: { active: boolean }) {
                     <Button type="submit" loading={busy === 'find'}>Atrast</Button>
                 </form>
                 <Button id="reload-btn" className="ghost" loading={reloading} onClick={reload}>↻ Rādīt visus</Button>
+                <select
+                    id="post-order"
+                    aria-label="Kārtošana"
+                    value={posts.order}
+                    onChange={(event) => posts.setOrder(event.target.value === 'oldest' ? 'oldest' : 'newest')}
+                >
+                    <option value="newest">Jaunākie augšā</option>
+                    <option value="oldest">Vecākie augšā</option>
+                </select>
                 <span className="muted" id="posts-summary">{summary}</span>
             </div>
 
