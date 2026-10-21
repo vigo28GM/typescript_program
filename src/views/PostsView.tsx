@@ -4,6 +4,7 @@ import { Api } from '../api.ts';
 import type { AjaxMethod } from '../api.ts';
 import { useApp } from '../AppContext.ts';
 import Button from '../components/Button.tsx';
+import DeleteButton from '../components/DeleteButton.tsx';
 import PostCard from '../components/PostCard.tsx';
 import Spinner from '../components/Spinner.tsx';
 import View from '../components/View.tsx';
@@ -15,7 +16,7 @@ const METHODS: [AjaxMethod, string][] = [
 ];
 
 export default function PostsView({ active }: { active: boolean }) {
-    const { posts, method, changeMethod, slow, changeSlow } = useApp();
+    const { user, notify, posts, method, changeMethod, slow, changeSlow } = useApp();
     const [findId, setFindId] = useState('');
     const [reloading, setReloading] = useState(false);
     const [busy, perform] = useRunner();
@@ -31,6 +32,18 @@ export default function PostsView({ active }: { active: boolean }) {
         setReloading(true);
         await posts.load();
         setReloading(false);
+    };
+
+    // Visi lietotāja paša ieraksti, kas pašlaik ir sarakstā
+    const mine = user ? posts.visible.filter((post) => post.user_id === user.id) : [];
+
+    const removeMine = async () => {
+        for (const post of mine) {
+            const ok = await perform('delete-all', () => Api.deletePost(post.id));
+            if (!ok) return;
+            posts.remove(post.id);
+        }
+        notify('Visi tavi ieraksti izdzēsti.');
     };
 
     let summary = '';
@@ -74,6 +87,11 @@ export default function PostsView({ active }: { active: boolean }) {
                     <option value="newest">Jaunākie augšā</option>
                     <option value="oldest">Vecākie augšā</option>
                 </select>
+                {mine.length > 0 && (
+                    <DeleteButton confirmText={`Vai tiešām dzēst visus savus ierakstus (${mine.length})?`} loading={busy === 'delete-all'} onConfirm={removeMine}>
+                        Dzēst visus manus
+                    </DeleteButton>
+                )}
                 <span className="muted" id="posts-summary">{summary}</span>
             </div>
 
