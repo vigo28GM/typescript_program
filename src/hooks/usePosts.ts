@@ -5,6 +5,16 @@ import type { CreatedPost, Post, RunFn } from '../types.ts';
 type LoadStatus = 'loading' | 'ready' | 'error';
 export type PostOrder = 'newest' | 'oldest';
 
+const ORDER_KEY = 'posts-order';
+
+function readOrder(): PostOrder {
+    try {
+        return localStorage.getItem(ORDER_KEY) === 'oldest' ? 'oldest' : 'newest';
+    } catch {
+        return 'newest';
+    }
+}
+
 // Ierakstu saraksts un tā stāvoklis. `run` ir kopīgā funkcija, kas izpilda API izsaukumu
 // un parāda kļūdas paziņojumu (skat. App.jsx).
 export function usePosts(run: RunFn) {
@@ -12,7 +22,15 @@ export function usePosts(run: RunFn) {
     const [status, setStatus] = useState<LoadStatus>('loading');
     const [filterId, setFilterId] = useState<number | null>(null); // ja nav null, rāda tikai šo ierakstu
     const [highlightId, setHighlightId] = useState<number | null>(null);
-    const [order, setOrder] = useState<PostOrder>('newest');   // kārtošanas secība
+    const [order, setOrder] = useState<PostOrder>(readOrder);   // kārtošanas secība (atceras pārlūkā)
+    const changeOrder = useCallback((next: PostOrder) => {
+        setOrder(next);
+        try {
+            localStorage.setItem(ORDER_KEY, next);
+        } catch {
+            // privātajā režīmā glabātuve var nebūt pieejama; secība tad darbojas tikai šajā sesijā
+        }
+    }, []);
     const sequence = useRef(0);
     const abortRef = useRef<AbortController | null>(null);
 
@@ -74,7 +92,7 @@ export function usePosts(run: RunFn) {
     const visible = filterId === null ? sorted : posts.filter((p) => p.id === filterId);
 
     return {
-        visible, total: posts.length, order, setOrder, status, filterId, highlightId,
+        visible, total: posts.length, order, setOrder: changeOrder, status, filterId, highlightId,
         load, cancel, showOne, add, replace: upsert, remove,
     };
 }

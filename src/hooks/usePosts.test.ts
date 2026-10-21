@@ -15,4 +15,12 @@ describe('usePosts order', () => {
         act(() => { result.current.setOrder('oldest'); });
         expect(result.current.visible.map((p) => p.id)).toEqual([1, 2]);
     });
+
+    it('remembers the chosen order between visits', () => {
+        const first = renderHook(() => usePosts(run));
+        act(() => { first.result.current.setOrder('oldest'); });
+        first.unmount();
+        const second = renderHook(() => usePosts(run));
+        expect(second.result.current.order).toBe('oldest');
+    });
 });
